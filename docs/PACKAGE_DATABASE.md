@@ -20,7 +20,7 @@ This document explains how to contribute to the Shai-Hulud 2.0 Detector's packag
 
 ## Overview
 
-The `master-packages.json` file is the heart of the Shai-Hulud 2.0 Detector. It contains the list of all known compromised packages from the attack. This database is:
+The `compromised-packages.json` file is the heart of the Shai-Hulud 2.0 Detector. It contains the list of all known compromised packages from the attack. This database is:
 
 - **Open Source** - Anyone can view and contribute
 - **Crowdsourced** - Community members help identify new packages
@@ -43,7 +43,7 @@ The `master-packages.json` file is the heart of the Shai-Hulud 2.0 Detector. It 
 ### File Location
 
 ```
-/master-packages.json
+/compromised-packages.json
 ```
 
 ### Schema
@@ -158,7 +158,7 @@ Where did you find this information?
    git checkout -b add-packages/your-name
    ```
 
-3. **Edit master-packages.json**
+3. **Edit compromised-packages.json**
 
    Add new packages to the `packages` array (maintain alphabetical order):
    ```json
@@ -184,7 +184,7 @@ Where did you find this information?
 
 6. **Commit with evidence**
    ```bash
-   git add master-packages.json
+   git add compromised-packages.json
    git commit -m "feat(db): add @new-scope/new-package
 
    Evidence: [link to analysis]
@@ -231,7 +231,7 @@ If a package is incorrectly flagged:
 3. **PR to Remove:**
    ```bash
    git checkout -b fix/false-positive-package-name
-   # Remove from master-packages.json
+   # Remove from compromised-packages.json
    git commit -m "fix(db): remove false positive package-name
 
    Evidence: [link]"
@@ -242,7 +242,7 @@ If a package is incorrectly flagged:
 To update severity or affected versions:
 
 ```bash
-# Edit master-packages.json
+# Edit compromised-packages.json
 # Change:
 {
   "name": "@scope/package",
@@ -472,11 +472,11 @@ You'll receive feedback explaining why. You can provide additional evidence and 
 
 ### Q: How do I know if a package was already reported?
 
-1. Search the `master-packages.json` file
+1. Search the `compromised-packages.json` file
 2. Search existing GitHub issues
 3. Use our search tool:
    ```bash
-   grep -i "package-name" master-packages.json
+   grep -i "package-name" compromised-packages.json
    ```
 
 ### Q: Can I submit packages from private registries?

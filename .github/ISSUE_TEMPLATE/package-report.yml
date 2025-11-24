@@ -14,7 +14,7 @@ body:
 
         **Before submitting:**
         - Search existing issues to avoid duplicates
-        - Check if the package is already in `master-packages.json`
+        - Check if the package is already in `compromised-packages.json`
 
   - type: input
     id: package_name

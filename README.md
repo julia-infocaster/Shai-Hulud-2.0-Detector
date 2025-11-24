@@ -40,6 +40,7 @@
 
 - [About the Attack](#about-the-attack)
 - [Quick Start](#quick-start)
+- [Detection Capabilities](#detection-capabilities)
 - [**Help Us Protect the Community**](#-help-us-protect-the-community) ⭐
 - [Installation](#installation)
   - [GitHub Action (Recommended)](#github-action-recommended)
@@ -169,6 +170,47 @@ View scan results in the Actions tab of your repository.
 
 ---
 
+## Detection Capabilities
+
+This detector goes beyond simple package name matching to provide comprehensive threat detection:
+
+### Critical Risk Detection
+
+| Check | Description |
+|-------|-------------|
+| **Compromised Packages** | Scans against database of 790+ known compromised packages |
+| **Malicious Scripts** | Detects `setup_bun.js`, `bun_environment.js` in postinstall/preinstall hooks |
+| **TruffleHog Activity** | Identifies credential scanning patterns and TruffleHog downloads |
+| **Malicious Runners** | Detects SHA1HULUD GitHub Actions self-hosted runner references |
+| **Secrets Exfiltration** | Finds `actionsSecrets.json` files with stolen credentials |
+| **Shai-Hulud Repos** | Identifies git remotes/repos named "Shai-Hulud" |
+
+### Medium Risk Detection
+
+| Check | Description |
+|-------|-------------|
+| **Webhook Exfiltration** | Detects `webhook.site` endpoints and known malicious UUIDs |
+| **Suspicious Branches** | Flags git branches named "shai-hulud" |
+| **Dangerous Scripts** | Identifies `curl|sh`, `wget|sh`, `eval`, base64 decode patterns |
+
+### Low Risk Detection
+
+| Check | Description |
+|-------|-------------|
+| **Namespace Warnings** | Alerts on packages from affected namespaces (@ctrl, @asyncapi, etc.) with semver ranges |
+
+### Disclaimer
+
+> **This tool is for DETECTION purposes only.** It does not:
+> - Automatically remove or quarantine malicious code
+> - Patch, fix, or remediate compromised packages
+> - Prevent future supply chain attacks
+> - Guarantee detection of all compromised packages
+>
+> All findings should be manually verified. Take appropriate remediation steps including credential rotation, dependency updates, and forensic analysis.
+
+---
+
 ## 🌍 Help Us Protect the Community
 
 <p align="center">
@@ -236,7 +278,7 @@ If you're doing systematic analysis and finding multiple packages:
 
 1. **Use our [Batch Submission Form](https://github.com/gensecaihq/Shai-Hulud-2.0-Detector/issues/new?template=batch-submission.yml)** for efficiency
 2. **Read the full [Package Database Guide](docs/PACKAGE_DATABASE.md)** for detailed instructions
-3. **Consider submitting a PR** directly to `master-packages.json` for faster integration
+3. **Consider submitting a PR** directly to `compromised-packages.json` for faster integration
 4. **We'll credit you** in our acknowledgments!
 
 ### Database Statistics
@@ -246,7 +288,7 @@ If you're doing systematic analysis and finding multiple packages:
 | Total Packages | **790+** |
 | Organizations | **50+** |
 | Contributors | Growing! |
-| Last Updated | See `master-packages.json` |
+| Last Updated | See `compromised-packages.json` |
 
 > **📖 Full Documentation:** [docs/PACKAGE_DATABASE.md](docs/PACKAGE_DATABASE.md)
 >
@@ -658,9 +700,11 @@ Access scan results for conditional logic or notifications:
 | Output | Description | Example |
 |--------|-------------|---------|
 | `affected-count` | Number of compromised packages detected | `3` |
+| `security-findings-count` | Number of security findings (scripts, runners, etc.) | `2` |
 | `status` | Overall scan status | `clean` or `affected` |
 | `scan-time` | Scan duration in milliseconds | `156` |
 | `results` | JSON array of detected packages | `[{"package":"posthog-node",...}]` |
+| `security-findings` | JSON array of security findings | `[{"type":"suspicious-script",...}]` |
 | `sarif-file` | Path to generated SARIF file (when output-format is sarif) | `shai-hulud-results.sarif` |
 
 ### Environment Variables
@@ -790,7 +834,7 @@ The package database is updated when:
 - False positives are reported and verified
 - Organizations release remediated versions
 
-Check `master-packages.json` for the full list with version information.
+Check `compromised-packages.json` for the full list with version information.
 
 ---
 
@@ -997,7 +1041,7 @@ node dist/index.js
    # Fork and clone the repo
    git checkout -b add-package/package-name
 
-   # Edit master-packages.json - add to packages array:
+   # Edit compromised-packages.json - add to packages array:
    {
      "name": "@scope/package-name",
      "severity": "critical",

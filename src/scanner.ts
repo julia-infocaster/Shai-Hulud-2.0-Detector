@@ -9,7 +9,7 @@ import {
   SarifResult,
   SecurityFinding,
 } from './types';
-import masterPackagesData from '../master-packages.json';
+import masterPackagesData from '../compromised-packages.json';
 
 // =============================================================================
 // SUSPICIOUS PATTERNS FOR ADVANCED DETECTION

@@ -77,7 +77,7 @@ We welcome suggestions for new features! Please include:
 
 ### Updating Package Database
 
-The package database (`master-packages.json`) is critical for detection accuracy.
+The package database (`compromised-packages.json`) is critical for detection accuracy.
 
 #### Adding a New Compromised Package
 
