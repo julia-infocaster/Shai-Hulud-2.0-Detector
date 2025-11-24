@@ -77,6 +77,59 @@ const AFFECTED_NAMESPACES = [
   '@browserbase',
 ];
 
+// Files/paths to exclude from scanning (detector's own source code)
+const EXCLUDED_PATHS = [
+  /shai-hulud.*detector/i,
+  /\/src\/scanner\.(ts|js)$/i,
+  /\/src\/types\.(ts|js)$/i,
+  /\/src\/index\.(ts|js)$/i,
+  /\/dist\/index\.js$/i,
+  /\/dist\/.*\.d\.ts$/i,
+];
+
+/**
+ * Check if a file path should be excluded from security scanning
+ * (to prevent false positives on the detector's own source code)
+ */
+function isExcludedPath(filePath: string): boolean {
+  // Normalize path separators
+  const normalizedPath = filePath.replace(/\\/g, '/');
+
+  // Check if this looks like the detector's own source
+  for (const pattern of EXCLUDED_PATHS) {
+    if (pattern.test(normalizedPath)) {
+      return true;
+    }
+  }
+
+  // Also exclude if the file contains detector identification markers
+  return false;
+}
+
+/**
+ * Check if file content indicates this is the detector's source code
+ */
+function isDetectorSourceCode(content: string): boolean {
+  // Check for unique markers that identify this as the detector's source
+  const detectorMarkers = [
+    'SHAI-HULUD 2.0 SUPPLY CHAIN ATTACK DETECTOR',
+    'gensecaihq/Shai-Hulud-2.0-Detector',
+    'SUSPICIOUS PATTERNS FOR ADVANCED DETECTION',
+    'checkTrufflehogActivity',
+    'checkMaliciousRunners',
+  ];
+
+  let markerCount = 0;
+  for (const marker of detectorMarkers) {
+    if (content.includes(marker)) {
+      markerCount++;
+    }
+  }
+
+  // If 2+ markers found, this is likely the detector's source
+  return markerCount >= 2;
+}
+
 const masterPackages: MasterPackages = masterPackagesData as MasterPackages;
 
 // Create a Set for O(1) lookup
@@ -409,8 +462,18 @@ export function checkTrufflehogActivity(directory: string): SecurityFinding[] {
 
           // Scan content of shell scripts and JS files
           if (/\.(sh|js|ts|mjs|cjs)$/i.test(entry.name)) {
+            // Skip excluded paths (detector's own source code)
+            if (isExcludedPath(fullPath)) {
+              continue;
+            }
+
             try {
               const content = fs.readFileSync(fullPath, 'utf8');
+
+              // Skip if this is the detector's own source code
+              if (isDetectorSourceCode(content)) {
+                continue;
+              }
 
               for (const { pattern, description } of TRUFFLEHOG_PATTERNS) {
                 if (pattern.test(content)) {
@@ -628,15 +691,21 @@ export function checkShaiHuludRepos(directory: string): SecurityFinding[] {
     try {
       const content = fs.readFileSync(gitConfigPath, 'utf8');
 
-      for (const { pattern, description } of SHAI_HULUD_REPO_PATTERNS) {
-        if (pattern.test(content)) {
-          findings.push({
-            type: 'shai-hulud-repo',
-            severity: 'critical',
-            title: `Shai-Hulud repository reference in git config`,
-            description: `${description}. Your repository may have been configured to push to an attacker-controlled remote.`,
-            location: gitConfigPath,
-          });
+      // Skip if this is the detector's own repository
+      if (content.includes('Shai-Hulud-2.0-Detector') ||
+          content.includes('gensecaihq')) {
+        // This is the detector's own repo, skip
+      } else {
+        for (const { pattern, description } of SHAI_HULUD_REPO_PATTERNS) {
+          if (pattern.test(content)) {
+            findings.push({
+              type: 'shai-hulud-repo',
+              severity: 'critical',
+              title: `Shai-Hulud repository reference in git config`,
+              description: `${description}. Your repository may have been configured to push to an attacker-controlled remote.`,
+              location: gitConfigPath,
+            });
+          }
         }
       }
     } catch {
@@ -650,15 +719,26 @@ export function checkShaiHuludRepos(directory: string): SecurityFinding[] {
     try {
       const content = fs.readFileSync(file, 'utf8');
 
+      // Skip if this is the detector's own package.json
+      if (content.includes('gensecaihq/Shai-Hulud-2.0-Detector') ||
+          content.includes('shai-hulud-detector')) {
+        continue;
+      }
+
       for (const { pattern, description } of SHAI_HULUD_REPO_PATTERNS) {
         if (pattern.test(content)) {
-          findings.push({
-            type: 'shai-hulud-repo',
-            severity: 'high',
-            title: `Shai-Hulud reference in package.json`,
-            description: `${description}. Package may be configured to reference attacker infrastructure.`,
-            location: file,
-          });
+          // Make sure it's not just a reference to the detector
+          const contentWithoutDetector = content.replace(/gensecaihq\/Shai-Hulud-2\.0-Detector/gi, '')
+                                                .replace(/shai-hulud-detector/gi, '');
+          if (pattern.test(contentWithoutDetector)) {
+            findings.push({
+              type: 'shai-hulud-repo',
+              severity: 'high',
+              title: `Shai-Hulud reference in package.json`,
+              description: `${description}. Package may be configured to reference attacker infrastructure.`,
+              location: file,
+            });
+          }
         }
       }
     } catch {
