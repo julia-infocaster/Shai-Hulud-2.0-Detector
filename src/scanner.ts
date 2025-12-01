@@ -332,15 +332,15 @@ export function scanPackageJson(
 	};
 
 	for (const [name, version] of Object.entries(allDeps)) {
-		if (isAffected(name)) {
-			results.push({
-				package: name,
-				version: version || 'unknown',
-				severity: getPackageSeverity(name),
-				isDirect,
-				location: filePath,
-			});
-		}
+		const affected = isAffected(name);
+		results.push({
+			package: name,
+			version: version || 'unknown',
+			affected,
+			severity: affected ? getPackageSeverity(name) : 'none',
+			isDirect,
+			location: filePath,
+		});
 	}
 
 	return results;
@@ -365,15 +365,15 @@ export function scanPackageLock(filePath: string): ScanResult[] {
 			const match = pkgPath.match(/node_modules\/(.+)$/);
 			if (match) {
 				const name = match[1];
-				if (isAffected(name)) {
-					results.push({
-						package: name,
-						version: entry.version || 'unknown',
-						severity: getPackageSeverity(name),
-						isDirect: !pkgPath.includes('node_modules/node_modules'),
-						location: filePath,
-					});
-				}
+				const affected = isAffected(name);
+				results.push({
+					package: name,
+					version: entry.version || 'unknown',
+					affected: isAffected(name),
+					severity: affected ? getPackageSeverity(name) : 'none',
+					isDirect: !pkgPath.includes('node_modules/node_modules'),
+					location: filePath,
+				});
 			}
 		}
 	}
@@ -382,15 +382,15 @@ export function scanPackageLock(filePath: string): ScanResult[] {
 	if (lock.dependencies) {
 		const scanDependencies = (deps: Record<string, any>, isDirect: boolean) => {
 			for (const [name, entry] of Object.entries(deps)) {
-				if (isAffected(name)) {
-					results.push({
-						package: name,
-						version: entry.version || 'unknown',
-						severity: getPackageSeverity(name),
-						isDirect,
-						location: filePath,
-					});
-				}
+				const affected = isAffected(name);
+				results.push({
+					package: name,
+					version: entry.version || 'unknown',
+					affected,
+					severity: affected ? getPackageSeverity(name) : 'none',
+					isDirect,
+					location: filePath,
+				});
 				// Recursively scan nested dependencies
 				if (entry.dependencies) {
 					scanDependencies(entry.dependencies, false);
@@ -416,15 +416,15 @@ export function scanYarnLock(filePath: string): ScanResult[] {
 	if (!packages) return results;
 
 	for (const [name, version] of packages.entries()) {
-		if (isAffected(name)) {
-			results.push({
-				package: name,
-				version,
-				severity: getPackageSeverity(name),
-				isDirect: false, // yarn.lock doesn't indicate direct vs transitive
-				location: filePath,
-			});
-		}
+		const affected = isAffected(name);
+		results.push({
+			package: name,
+			version,
+			affected,
+			severity: affected ? getPackageSeverity(name) : 'none',
+			isDirect: false, // yarn.lock doesn't indicate direct vs transitive
+			location: filePath,
+		});
 	}
 
 	return results;
@@ -1091,7 +1091,9 @@ export function runScan(
 			const key = `${result.package}@${result.version}`;
 			if (!seenPackages.has(key)) {
 				seenPackages.add(key);
-				allResults.push(result);
+				if (result.affected) {
+					allResults.push(result);
+				}
 			}
 		}
 
@@ -1137,7 +1139,9 @@ export function runScan(
 				const key = `${result.package}@${result.version}`;
 				if (!seenPackages.has(key)) {
 					seenPackages.add(key);
-					allResults.push(result);
+					if (result.affected) {
+						allResults.push(result);
+					}
 				}
 			}
 		}
@@ -1198,7 +1202,7 @@ export function runScan(
 	}
 
 	// Sort results by severity
-	const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+	const severityOrder = { critical: 0, high: 1, medium: 2, low: 3, none: 4 };
 	allResults.sort(
 		(a, b) => severityOrder[a.severity] - severityOrder[b.severity],
 	);
@@ -1214,6 +1218,7 @@ export function runScan(
 		cleanCount: seenPackages.size - allResults.length,
 		results: allResults,
 		securityFindings: allSecurityFindings,
+		scannedFilesCount: scannedFiles.length,
 		scannedFiles,
 		scanTime: Date.now() - startTime,
 	};

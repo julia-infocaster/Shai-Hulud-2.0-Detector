@@ -31,7 +31,8 @@ export interface MasterPackages {
 export interface ScanResult {
     package: string;
     version: string;
-    severity: 'critical' | 'high' | 'medium' | 'low';
+    affected: boolean;
+    severity: 'critical' | 'high' | 'medium' | 'low' | 'none';
     isDirect: boolean;
     location: string;
 }
@@ -59,6 +60,7 @@ export interface ScanSummary {
     cleanCount: number;
     results: ScanResult[];
     securityFindings: SecurityFinding[];
+    scannedFilesCount: number;
     scannedFiles: string[];
     scanTime: number;
 }
