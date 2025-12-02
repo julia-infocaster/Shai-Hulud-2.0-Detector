@@ -31,12 +31,18 @@ export interface MasterPackages {
         primaryInfectionVectors?: string[];
         mavenPackages?: string[];
     };
-    stats: {
+    stats?: {
         totalUniquePackages: number;
         byOrganization: Record<string, number>;
     };
     packages: PackageEntry[];
-    sources: string[];
+    sources?: string[];
+    dataSource?: {
+        url: string;
+        description: string;
+        sources: string[];
+        fetchedAt: string;
+    };
     acknowledgements?: {
         securityResearchers: Array<{
             org: string;
