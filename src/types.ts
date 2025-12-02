@@ -33,12 +33,21 @@ export interface MasterPackages {
     primaryInfectionVectors?: string[];
     mavenPackages?: string[];
   };
-  stats: {
+  // Optional: Used in legacy format
+  stats?: {
     totalUniquePackages: number;
     byOrganization: Record<string, number>;
   };
   packages: PackageEntry[];
-  sources: string[];
+  // Optional: Used in legacy format
+  sources?: string[];
+  // New: Data source information for automated updates
+  dataSource?: {
+    url: string;
+    description: string;
+    sources: string[];
+    fetchedAt: string;
+  };
   acknowledgements?: {
     securityResearchers: Array<{
       org: string;

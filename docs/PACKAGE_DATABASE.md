@@ -1,10 +1,12 @@
 # Package Database Contribution Guide
 
-This document explains how to contribute to the Shai-Hulud 2.0 Detector's package database through crowdsourced, open-source contributions.
+This document explains how the Shai-Hulud 2.0 Detector's package database is maintained and how you can contribute.
 
 ## Table of Contents
 
 - [Overview](#overview)
+- [Automated Updates](#automated-updates)
+- [Data Sources](#data-sources)
 - [Database Structure](#database-structure)
 - [How to Contribute](#how-to-contribute)
   - [Adding New Packages](#adding-new-packages)
@@ -22,19 +24,84 @@ This document explains how to contribute to the Shai-Hulud 2.0 Detector's packag
 
 The `compromised-packages.json` file is the heart of the Shai-Hulud 2.0 Detector. It contains the list of all known compromised packages from the attack. This database is:
 
+- **Automatically Updated** - Syncs daily from 7 security vendors
+- **Precise Version Matching** - Only specific compromised versions are flagged
 - **Open Source** - Anyone can view and contribute
-- **Crowdsourced** - Community members help identify new packages
-- **Verified** - All submissions are reviewed before merging
-- **Version Controlled** - Full history of changes available
+- **Verified** - All data is cross-referenced from multiple sources
 
 ### Current Statistics
 
 | Metric | Value |
 |--------|-------|
-| Total Packages | 790+ |
-| Organizations Affected | 50+ |
+| Total Packages | 795+ |
+| Data Sources | 7 security vendors |
+| Update Frequency | Daily (automated) |
+| Version Precision | Specific versions only |
 | Last Updated | See `lastUpdated` field in JSON |
-| Contributors | See GitHub contributors |
+
+---
+
+## Automated Updates
+
+The package database is **automatically updated daily** via GitHub Actions. This ensures the database stays current with the latest threat intelligence from multiple security vendors.
+
+### How It Works
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    DAILY UPDATE PROCESS                         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  1. GitHub Action runs at 00:00 UTC daily                       │
+│                                                                 │
+│  2. Fetches consolidated IOCs from Datadog repository           │
+│     └─► https://github.com/DataDog/indicators-of-compromise     │
+│                                                                 │
+│  3. Parses CSV and extracts package names + specific versions   │
+│                                                                 │
+│  4. Updates compromised-packages.json                           │
+│                                                                 │
+│  5. Creates Pull Request if changes detected                    │
+│                                                                 │
+│  6. Maintainers review and merge                                │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Manual Update
+
+To manually trigger an update:
+
+```bash
+# Via GitHub Actions UI
+# Go to Actions → "Update IOC Database" → "Run workflow"
+
+# Or locally
+node scripts/update-ioc-database.js
+```
+
+---
+
+## Data Sources
+
+The database aggregates data from **7 security vendors** via the [Datadog Consolidated IOCs](https://github.com/DataDog/indicators-of-compromise/tree/main/shai-hulud-2.0):
+
+| Source | Packages | Description |
+|--------|----------|-------------|
+| **[Wiz](https://www.wiz.io)** | 795 | Threat investigation & attack analysis |
+| **[Koi Security](https://koi.security)** | 789 | Supply chain threat intelligence |
+| **[HelixGuard](https://helixguard.ai)** | 782 | Malware analysis and IOC identification |
+| **[StepSecurity](https://www.stepsecurity.io)** | 781 | GitHub Actions security |
+| **[ReversingLabs](https://www.reversinglabs.com)** | 605 | Software supply chain security |
+| **[Socket.dev](https://socket.dev)** | 554 | npm security monitoring |
+| **[Datadog Security Labs](https://securitylabs.datadoghq.com)** | 428 | SHA256 hash IOCs & malware analysis |
+
+### Why Multiple Sources?
+
+Each security vendor has unique detection methods. By aggregating data:
+- **Higher coverage**: No single source catches everything
+- **Cross-validation**: Multiple sources confirming = higher confidence
+- **Faster updates**: New discoveries propagate from any source
 
 ---
 
@@ -123,7 +190,31 @@ The `compromised-packages.json` file is the heart of the Shai-Hulud 2.0 Detector
 |-------|------|----------|-------------|
 | `name` | string | Yes | Full npm package name (e.g., `@scope/pkg` or `pkg`) |
 | `severity` | string | Yes | One of: `critical`, `high`, `medium`, `low` |
-| `affectedVersions` | array | Yes | Version patterns (e.g., `["*"]`, `[">=1.0.0 <2.0.0"]`) |
+| `affectedVersions` | array | Yes | **Specific versions only** (e.g., `["3.4.1", "3.4.2"]`) |
+
+### Version Precision
+
+The database now uses **specific version numbers** instead of wildcards:
+
+```json
+// OLD format (caused false positives)
+{
+  "name": "@asyncapi/parser",
+  "severity": "critical",
+  "affectedVersions": ["*"]  // Flagged ALL versions
+}
+
+// NEW format (precise matching)
+{
+  "name": "@asyncapi/parser",
+  "severity": "critical",
+  "affectedVersions": ["3.4.1", "3.4.2"]  // Only compromised versions
+}
+```
+
+This eliminates false positives for:
+- Pre-attack versions (published before Nov 24, 2025)
+- Post-remediation clean versions
 
 ### Severity Levels
 

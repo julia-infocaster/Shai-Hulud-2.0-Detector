@@ -59,6 +59,8 @@
 - [Supported File Types](#supported-file-types)
 - [Understanding Results](#understanding-results)
 - [Affected Packages Database](#affected-packages-database)
+  - [Automated Daily Updates](#automated-daily-updates)
+  - [Why Version Precision Matters](#why-version-precision-matters)
 - [Indicators of Compromise](#indicators-of-compromise)
 - [Incident Response Guide](#incident-response-guide)
 - [FAQ](#faq)
@@ -303,14 +305,17 @@ If you're doing systematic analysis and finding multiple packages:
 
 ### Database Statistics
 
-| Metric | Count |
+| Metric | Value |
 |--------|-------|
-| Total Packages | **790+** |
-| Organizations | **50+** |
-| Contributors | Growing! |
+| Total Packages | **795+** |
+| Data Sources | **7 security vendors** |
+| Update Frequency | **Daily (automated)** |
+| Version Precision | **Specific versions only** |
 | Last Updated | See `compromised-packages.json` |
 
 > **📖 Full Documentation:** [docs/PACKAGE_DATABASE.md](docs/PACKAGE_DATABASE.md)
+>
+> **🔄 Auto-Updated:** Database syncs daily from [Datadog Consolidated IOCs](https://github.com/DataDog/indicators-of-compromise/tree/main/shai-hulud-2.0)
 >
 > **🙏 Thank you to everyone who contributes. Together, we're making npm safer for everyone.**
 
@@ -886,7 +891,7 @@ When running locally or in non-GitHub CI systems:
 
 ## Affected Packages Database
 
-The detector includes a database of **790 unique packages** identified in the attack:
+The detector includes a database of **795+ unique packages** identified in the attack, with **precise version matching** to minimize false positives.
 
 | Organization | Count | Key Packages |
 |--------------|-------|--------------|
@@ -898,14 +903,70 @@ The detector includes a database of **790 unique packages** identified in the at
 | Postman | 17 | `@postman/tunnel-agent`, `@postman/mcp-server`, `@postman/csv-parse` |
 | BrowserBase | 7 | `@browserbasehq/stagehand`, `@browserbasehq/mcp`, `@browserbasehq/sdk-functions` |
 | Oku UI | 41 | `@oku-ui/primitives`, `@oku-ui/dialog`, `@oku-ui/toast` |
-| Others | 508 | Various community packages |
+| Others | 513 | Various community packages |
 
-### Database Updates
+### Automated Daily Updates
 
-The package database is updated when:
-- New compromised packages are identified
-- False positives are reported and verified
-- Organizations release remediated versions
+The package database is **automatically updated daily** from the [Datadog Consolidated IOCs](https://github.com/DataDog/indicators-of-compromise/tree/main/shai-hulud-2.0), which aggregates data from **7 security vendors**:
+
+| Source | Description |
+|--------|-------------|
+| **[Datadog Security Labs](https://securitylabs.datadoghq.com)** | SHA256 hash IOCs & malware analysis |
+| **[Wiz](https://www.wiz.io)** | Threat investigation & attack analysis |
+| **[HelixGuard](https://helixguard.ai)** | Malware analysis and IOC identification |
+| **[ReversingLabs](https://www.reversinglabs.com)** | Software supply chain security |
+| **[Socket.dev](https://socket.dev)** | npm security monitoring |
+| **[StepSecurity](https://www.stepsecurity.io)** | GitHub Actions security |
+| **[Koi Security](https://koi.security)** | Supply chain threat intelligence |
+
+### How Updates Work
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    DAILY UPDATE PROCESS                         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  00:00 UTC      Fetch consolidated     Parse CSV &              │
+│  Daily ────► IOCs from Datadog ────► extract versions ────►    │
+│                                                                 │
+│      Update              Create PR              Merge           │
+│  ──► compromised- ────► for review ────► (after approval)      │
+│      packages.json                                              │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+- **Automated Workflow**: Runs daily at 00:00 UTC via GitHub Actions
+- **Manual Trigger**: Can be triggered manually via workflow dispatch
+- **PR-based Updates**: Changes create a Pull Request for review before merging
+- **Version Precision**: Only specific compromised versions are flagged (no wildcards)
+
+### Why Version Precision Matters
+
+Previous versions flagged ALL versions of a package. Now only specific compromised versions are detected:
+
+```
+Example: @asyncapi/parser
+├── @asyncapi/parser@3.4.0  →  ✅ SAFE (published Oct 2024, pre-attack)
+├── @asyncapi/parser@3.4.1  →  ❌ COMPROMISED (attack version)
+└── @asyncapi/parser@3.4.2  →  ❌ COMPROMISED (attack version)
+```
+
+This eliminates false positives for:
+- Pre-attack versions (published before Nov 24, 2025)
+- Post-remediation clean versions
+
+### Manual Database Update
+
+To manually trigger a database update:
+
+```bash
+# Via GitHub Actions UI
+# Go to Actions → "Update IOC Database" → Run workflow
+
+# Or locally
+node scripts/update-ioc-database.js
+```
 
 Check `compromised-packages.json` for the full list with version information.
 
