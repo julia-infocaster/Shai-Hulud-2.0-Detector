@@ -1278,6 +1278,7 @@ A huge thank you to all the community members who have contributed to this proje
 | <img src=https://github.com/noahhsec.png width=32 height=32 alt=@noahhsec> | [@noahhsec](https://github.com/noahhsec) | Code contributions, Pull requests |
 | <img src=https://github.com/sampov2.png width=32 height=32 alt=@sampov2> | [@sampov2](https://github.com/sampov2) | Discussions |
 | <img src=https://github.com/seezee.png width=32 height=32 alt=@seezee> | [@seezee](https://github.com/seezee) | Issue reports |
+| <img src=https://github.com/Th3S4mur41.png width=32 height=32 alt=@Th3S4mur41> | [@Th3S4mur41](https://github.com/Th3S4mur41) | Discussions |
 | <img src=https://github.com/topsinfonimesh.png width=32 height=32 alt=@topsinfonimesh> | [@topsinfonimesh](https://github.com/topsinfonimesh) | Discussions |
 
 
